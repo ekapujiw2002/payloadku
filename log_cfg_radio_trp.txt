@@ -1,0 +1,11 @@
+19 de cf 74 00 00 e1 00
+00 69 23 07 00 00 e1 00
+
+19 de cf 74 	= freq				434,032,500Hz
+00 00 e1 00		= rf baudrate		57600bps
+00 69			= bw rx				105KHz
+23				= freq dev			35KHz
+07				= tx level			20dbm
+00 00 e1 00		= rs232 baudrate	57600bps
+
+19 DE CF 74 00 01 C2 00 00 69 23 07 00 00 E1 00 
