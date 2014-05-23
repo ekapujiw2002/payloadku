@@ -71,6 +71,7 @@ typedef enum {
  */
 
 //titel info
+#define ID_NAME			"MDP"
 #define APP_TITEL       "KOMURINDO 2014 MDP BLUE SKY\r\n"
 #define	CFG_NAME		"cfg.ini"	//file config
 #define	COMMA			","
@@ -111,7 +112,7 @@ void SetCameraFrameSize(CvCapture* aCamHandle, int frameWidth, int frameHeight);
 void GrabAndSendCameraData(CvCapture* aCamHandle, int i2c_handle, int skippedFrame, int comportHandle, unsigned int idPayloadNum, GPS_DATA *last_data, unsigned char rf_buffer_len); //comportHandle ignored for windows version
 void ADXL345_Init_Start(int i2c_bus_handle, unsigned char sensor_addr, unsigned char *statusPeripheralOutput);
 void Cam_Init_Start(CvCapture *camHdlOutput, unsigned char *statusPeripheralOutput);
-void GetAndSendAccGyro(int i2c_handle, int i2c_acc_addr, int i2c_gyro_addr, unsigned int idPayloadNum, unsigned int delaySend, GPS_DATA *last_data );
+void GetAndSendAccGyro(int i2c_handle, int i2c_acc_addr, int i2c_gyro_addr, unsigned int idPayloadNum, unsigned int delaySend, GPS_DATA *last_data, unsigned char rf_buffer_len );
 int I2C_Init_Bus(char *dev_i2c_name, unsigned char *statusPeripheralOutput);
 void ITG3200_Init_Start(int i2c_bus_handle, unsigned char sensor_addr, unsigned char *statusPeripheralOutput);
 unsigned char GetAndFormatGPSData(int i2c_bus_handle, unsigned char* gps_str_out, GPS_DATA *last_gps_data);
@@ -311,7 +312,7 @@ void GrabAndSendCameraData(CvCapture* aCamHandle, int i2c_handle, int skippedFra
  * send g and gyro data
  * */
 
-void GetAndSendAccGyro(int i2c_handle, int i2c_acc_addr, int i2c_gyro_addr, unsigned int idPayloadNum, unsigned int delaySend, GPS_DATA *last_data )
+void GetAndSendAccGyro(int i2c_handle, int i2c_acc_addr, int i2c_gyro_addr, unsigned int idPayloadNum, unsigned int delaySend, GPS_DATA *last_data, unsigned char rf_buffer_len )
 {
 	unsigned int gxvalue, gyvalue, gzvalue, gyrox, gyroy, gyroz;
 	unsigned char buff_data[100], buff_gps_data[40];
@@ -321,6 +322,9 @@ void GetAndSendAccGyro(int i2c_handle, int i2c_acc_addr, int i2c_gyro_addr, unsi
 	//double el1,el2;
 	
 	//c0 = clock();
+	
+	//set buff to all 0
+	memset(buff_data,0,100);
 	
 	//get g data
 	adxl345_get_gdata(i2c_handle, i2c_acc_addr, &gxvalue, &gyvalue, &gzvalue);
@@ -343,7 +347,8 @@ void GetAndSendAccGyro(int i2c_handle, int i2c_acc_addr, int i2c_gyro_addr, unsi
 	//c0 = clock();
 	
 	//format the data header+gyro acc
-	snprintf(buff_data, 34, "\r%.3d %.3d %.3d %.3d %.3d %.3d %.3d ",
+	snprintf(buff_data, 34, "%c%.3d %.3d %.3d %.3d %.3d %.3d %.3d ",
+	13,
 	idPayloadNum, 
 	adxl345_normalize_gdata(adxl345_calc_gvalue(gxvalue), 0, 999) , 
 	adxl345_normalize_gdata(adxl345_calc_gvalue(gyvalue), 0, 999), 
@@ -374,7 +379,8 @@ void GetAndSendAccGyro(int i2c_handle, int i2c_acc_addr, int i2c_gyro_addr, unsi
 	
 	//tail
 	//~ snprintf(buff_data, 5, " %.3d",	idPayloadNum);
-	snprintf(&buff_data[64], 35, " %31.3d", idPayloadNum);
+	//~ snprintf(&buff_data[64], 35, " %26.3s%4.3dX", ID_NAME, idPayloadNum);
+	snprintf(&buff_data[64], 35, " %3.3s%4.3d", ID_NAME, idPayloadNum);
 	
 	//send the data
 	//~ SendBuf(COM_PORT, buff_data, 4); 
@@ -384,13 +390,27 @@ void GetAndSendAccGyro(int i2c_handle, int i2c_acc_addr, int i2c_gyro_addr, unsi
 	//el2 = ((double) c2-c1) / CLOCKS_PER_SEC;
 	//printf("t1 = %f\t t2 = %f\n", el1, el2);
 	
+	//~ buff_data[0] = '\n';
 	//~ printf("%s", buff_data);
-	int i;
-	for(i=0;i<96;i+=32)
-	{
-		SendBuf(COM_PORT, &buff_data[i], 32); 
-		usleep(RF_DELAY_HALF_DUPLEX_US);
+	//~ buff_data[0] = '\r';
+	
+	unsigned int i;
+	//~ for(i=0;i<96;i+=32)
+	//~ {
+		//~ SendBuf(COM_PORT, &buff_data[i], 32); 
+		//~ usleep(delaySend);
+	//~ }
+
+	for(i=0;i<72;i++)
+    {
+		SendByte(COM_PORT,  buff_data[i]); 
+		//~ if(i%(rf_buffer_len-1)==0)
+		if(i%(16-1)==0)
+			usleep(delaySend);
 	}
+	
+	//~ SendByte(COM_PORT,  13); 
+	//~ SendByte(COM_PORT,  'A'); 
 	
 	usleep(delaySend);
 }
@@ -900,7 +920,7 @@ int main(int argc, char** argv) {
             case STATE_GET_G_DATA: //ambil data g
                 //SendByte(COM_PORT, 'g');
                 
-                GetAndSendAccGyro(i2c_hdl, adxl345_addr, itg3200_addr, idPayload, delayGyrodataSending, &last_posx);
+                GetAndSendAccGyro(i2c_hdl, adxl345_addr, itg3200_addr, idPayload, delayGyrodataSending, &last_posx, buffer_max_num);
                 break;
 
             case STATE_GET_CAM_DATA://ambil data cam

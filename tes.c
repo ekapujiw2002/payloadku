@@ -2,6 +2,7 @@
 
 int main(int argc, char** argv)
 {
-	printf(" %31d\n %31.3d\n", 12,12);
+	printf(" XXX %23.3s%4.3d\n", "MDP",12);
+	printf(" %31.3d\n", 12);
 	return 0;
 }
