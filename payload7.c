@@ -258,7 +258,7 @@ void GrabAndSendCameraData(CvCapture* aCamHandle, int i2c_handle, int skippedFra
 		
 		//tail
 		//~ snprintf(buff_gps_data, 5, " INA");
-		idPixel += 35;
+		idPixel += 37;
 		snprintf(&frameBuff[idPixel], 6, " %s", "GPS");
 		idPixel += 4;
 		
@@ -380,7 +380,7 @@ void GetAndSendAccGyro(int i2c_handle, int i2c_acc_addr, int i2c_gyro_addr, unsi
 	//tail
 	//~ snprintf(buff_data, 5, " %.3d",	idPayloadNum);
 	//~ snprintf(&buff_data[64], 35, " %26.3s%4.3dX", ID_NAME, idPayloadNum);
-	snprintf(&buff_data[64], 35, " %3.3s%4.3d", ID_NAME, idPayloadNum);
+	snprintf(&buff_data[66], 35, " %3.3s%4.3d", ID_NAME, idPayloadNum);
 	
 	//send the data
 	//~ SendBuf(COM_PORT, buff_data, 4); 
@@ -391,7 +391,7 @@ void GetAndSendAccGyro(int i2c_handle, int i2c_acc_addr, int i2c_gyro_addr, unsi
 	//printf("t1 = %f\t t2 = %f\n", el1, el2);
 	
 	//~ buff_data[0] = '\n';
-	//~ printf("%s", buff_data);
+	//~ printf("%s\n", buff_data);
 	//~ buff_data[0] = '\r';
 	
 	unsigned int i;
@@ -401,7 +401,7 @@ void GetAndSendAccGyro(int i2c_handle, int i2c_acc_addr, int i2c_gyro_addr, unsi
 		//~ usleep(delaySend);
 	//~ }
 
-	for(i=0;i<72;i++)
+	for(i=0;i<74;i++)
     {
 		SendByte(COM_PORT,  buff_data[i]); 
 		//~ if(i%(rf_buffer_len-1)==0)
@@ -640,7 +640,7 @@ unsigned char GetAndFormatGPSData(int i2c_bus_handle, unsigned char* gps_str_out
 	}
 	
 	//output to char*
-	snprintf(gps_str_out, 40,"%02x %08lx %08lx %02x %08lx %02x", gpsdtx.gps_status, gpsdtx.gps_loc.lat, gpsdtx.gps_loc.lon, gpsdtx.gps_altitude, gpsdtx.gps_time, gpsdtx.gps_speed);
+	snprintf(gps_str_out, 40,"%02x %08lx %08lx %04x %08lx %02x", gpsdtx.gps_status, gpsdtx.gps_loc.lat, gpsdtx.gps_loc.lon, gpsdtx.gps_altitude, gpsdtx.gps_time, gpsdtx.gps_speed);
 	
 	//~ printf("%s\r\n", gps_str_out);
 	
