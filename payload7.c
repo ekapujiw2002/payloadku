@@ -82,6 +82,10 @@ typedef enum {
 #define RF_DELAY_HALF_DUPLEX_US	12000
 #define	RF_BUFFER_NUM			128	//64 byte buffer with 10ms delay per packet
 
+//type of radio used
+#define	RADIO_TYPE_TRW433	//http://www.wenshing.com.tw/products/RF_Module/Transceiver_Module/TRW-V8-433-P_433MHz_Wireless_RF_500mW_Transceiver_Module/
+//#define	RADIO_TYPE_HMTRP	//http://www.hoperf.com/rf/data_link_module/HM-TRP-RS232.htm
+
 //com port
 #define COM_BUFF_NUM    30
 #define COM_SPEED       57600
@@ -296,16 +300,33 @@ void GrabAndSendCameraData(CvCapture* aCamHandle, int i2c_handle, int skippedFra
 	//~ fclose(fp);
     
     //send all data
-    printf("Going to send %ld byte with delay %d us\r\n", idPixel, delayPixelSending);    
-    for(i=0;i<(idPixel);i++)
-    {
-		SendByte(COM_PORT, frameBuff[i]); 
-		if(i%(rf_buffer_len-1)==0)
-			//~ usleep(RF_DELAY_HALF_DUPLEX_US);
-			usleep(delayPixelSending);
-	}
-    
-    usleep(RF_DELAY_LESS_PACKET_US);
+    printf("Going to send %ld byte with delay %d us\r\n", idPixel, delayPixelSending);  
+
+	//trw433
+	#ifdef RADIO_TYPE_TRW433
+		for(i=0;i<(idPixel);i++)
+		{
+			SendByte(COM_PORT, frameBuff[i]); 
+			if(i%(rf_buffer_len-1)==0)
+				//~ usleep(RF_DELAY_HALF_DUPLEX_US);
+				usleep(delayPixelSending);
+		}
+		
+		usleep(RF_DELAY_LESS_PACKET_US);
+	#endif
+	
+	//hm trp
+	#ifdef RADIO_TYPE_HMTRP
+		for(i=0;i<(idPixel);i++)
+		{
+			SendByte(COM_PORT, frameBuff[i]); 
+			if(i%(32-1)==0)
+				//~ usleep(RF_DELAY_HALF_DUPLEX_US);
+				usleep(delayPixelSending);
+		}
+		
+		usleep(RF_DELAY_LESS_PACKET_US);
+	#endif
 }
 
 /*
@@ -401,13 +422,27 @@ void GetAndSendAccGyro(int i2c_handle, int i2c_acc_addr, int i2c_gyro_addr, unsi
 		//~ usleep(delaySend);
 	//~ }
 
-	for(i=0;i<74;i++)
-    {
-		SendByte(COM_PORT,  buff_data[i]); 
-		//~ if(i%(rf_buffer_len-1)==0)
-		if(i%(16-1)==0)
-			usleep(delaySend);
-	}
+	//for trw433
+	#ifdef RADIO_TYPE_TRW433
+		for(i=0;i<74;i++)
+		{
+			SendByte(COM_PORT,  buff_data[i]); 
+			//~ if(i%(rf_buffer_len-1)==0)
+			if(i%(16-1)==0)
+				usleep(delaySend);
+		}
+	#endif
+	
+	//for hm-trp
+	#ifdef RADIO_TYPE_HMTRP
+		for(i=0;i<74;i++)
+		{
+			SendByte(COM_PORT,  buff_data[i]); 
+			//~ if(i%(rf_buffer_len-1)==0)
+			if(i%(32-1)==0)
+				usleep(delaySend);
+		}
+	#endif
 	
 	//~ SendByte(COM_PORT,  13); 
 	//~ SendByte(COM_PORT,  'A'); 
